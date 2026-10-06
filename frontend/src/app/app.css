@@ -1,0 +1,10 @@
+@import "../ui/ui.css";
+
+.session-summary { margin-bottom: var(--ui-space-large); }
+.session-summary p { margin: var(--ui-space-small) 0; }
+.session-note { color: var(--ui-muted); font-size: var(--ui-font-small); }
+.session-feedback { margin-top: var(--ui-space); }
+.branding-fields { border: 0; padding: 0; margin: 0; display: grid; gap: var(--ui-space); }
+.branding-fields legend { margin-bottom: var(--ui-space); font-weight: 600; }
+.branding-preview { margin-top: var(--ui-space-large); padding: var(--ui-space); background: var(--ui-background); color: var(--ui-text); border-radius: var(--ui-radius); }
+.branding-badge { display: inline-block; padding: 0.35rem 0.65rem; border-radius: var(--ui-radius); background: var(--brand-accent); color: var(--brand-on-accent); }
