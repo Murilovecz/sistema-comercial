@@ -1,0 +1,38 @@
+# Dados privados e operacionais — nunca entram no histórico
+/data/
+/backups/
+/.qa/
+*.sqlite
+*.sqlite-*
+*.db
+*.db-*
+*.bak
+*.backup
+PRIMEIRO-ACESSO.txt
+.env
+.env.*
+!.env.example
+*secret*
+*token*.txt
+*.key
+*.pem
+*.pfx
+*.p12
+*.log
+*.tmp
+*.temp
+*.txt
+# Capturas e mídia históricas podem conter dados comerciais
+*.png
+*.jpg
+*.jpeg
+*.webp
+*.mp4
+# Artefatos locais/gerados
+node_modules/
+dist/
+build/
+coverage/
+.cache/
+.DS_Store
+Thumbs.db

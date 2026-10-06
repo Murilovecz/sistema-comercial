@@ -1,0 +1,12 @@
+{
+  "name": "sistema-comercial",
+  "version": "1.2.0-foundation.1",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "test": "node --test --test-isolation=none"
+  },
+  "engines": {
+    "node": ">=24.7.0"
+  }
+}

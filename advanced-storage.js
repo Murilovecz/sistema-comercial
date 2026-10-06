@@ -1,0 +1,15 @@
+const {validDay}=require('./public/reports');
+const uint=(n,min=0)=>Number.isSafeInteger(n)&&n>=min;
+function validateAdvancedData(db){
+ for(const kind of ['priceLists','promotions'])for(const r of db[kind]||[]){
+  if(!uint(r.version,1)||!uint(r.number,1)||typeof r.name!=='string'||!r.name.trim()||typeof r.active!=='boolean'||!Array.isArray(r.history)||r.startsOn&&!validDay(r.startsOn)||r.endsOn&&!validDay(r.endsOn)||r.startsOn&&r.endsOn&&r.startsOn>r.endsOn)throw Error('Regra comercial inválida.');
+  if(kind==='priceLists'&&(!Array.isArray(r.items)||r.items.length>500||new Set(r.items.map(i=>i.productId)).size!==r.items.length||r.items.some(i=>typeof i.productId!=='string'||!uint(i.priceCents))))throw Error('Lista de preços inválida.');
+  if(kind==='promotions'&&(!['fixed','percent'].includes(r.type)||!uint(r.minQuantity,1)||!Array.isArray(r.productIds)||!r.productIds.length||new Set(r.productIds).size!==r.productIds.length||r.type==='fixed'&&!uint(r.valueCents)||r.type==='percent'&&(!uint(r.percentBps,1)||r.percentBps>10000)))throw Error('Promoção inválida.');
+ }
+ for(const p of db.products)if(p.minimumPriceCents!==undefined&&!uint(p.minimumPriceCents))throw Error('Preço mínimo inválido.');
+ for(const r of db.quarantineEntries||[]){if(!uint(r.version,1)||!uint(r.initialQuantity,1)||!uint(r.remainingQuantity)||!db.products.some(p=>p.id===r.productId)||!Array.isArray(r.inspections)||!Array.isArray(r.counts)||!Array.isArray(r.dispositions))throw Error('Entrada retida inválida.');let balance=r.initialQuantity;for(const d of r.dispositions){if(d.type==='adjust'){if(!Number.isSafeInteger(d.quantity))throw Error('Ajuste retido inválido.');balance+=d.quantity;}else{if(!uint(d.quantity,1)||!['release','discard','supplierReturn'].includes(d.type))throw Error('Destino retido inválido.');balance-=d.quantity;}if(!uint(balance))throw Error('Saldo retido inválido.');}if(balance!==r.remainingQuantity)throw Error('Posição retida não corresponde ao histórico.');}
+ for(const p of db.products)require('./public/quarantine-core').physicalPosition(db,p);
+ for(const r of db.supplierReturns||[]){if(!uint(r.version,1)||!uint(r.totalCents)||!Array.isArray(r.items)||!r.items.length||new Set(r.items.map(i=>i.productId)).size!==r.items.length||!Array.isArray(r.refunds))throw Error('Devolução ao fornecedor inválida.');for(const i of r.items)if(!uint(i.quantity,1)||!uint(i.unitCostCents)||!uint(i.acceptedQuantity)||!uint(i.refusedQuantity)||i.acceptedQuantity+i.refusedQuantity>i.quantity||!uint(i.returnedQuantity)||i.returnedQuantity>i.refusedQuantity)throw Error('Quantidade de retorno ao fornecedor inválida.');if(r.items.reduce((n,i)=>n+i.quantity*i.unitCostCents,0)!==r.totalCents||r.refunds.some(f=>!uint(f.amountCents,1)||!validDay(f.paidDate)))throw Error('Referência ou restituição de fornecedor inválida.');const summary=require('./public/supplier-return-core').supplierReturnSummary(r);if(summary.refundedCents>summary.acceptedCents)throw Error('Restituição acima da referência aceita.');}
+ return db;
+}
+module.exports={validateAdvancedData,uint};

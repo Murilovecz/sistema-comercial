@@ -1,0 +1,21 @@
+const {validDay}=require('./public/reports');
+const integer=(v,min=0)=>Number.isSafeInteger(v)&&v>=min;
+function unique(rows,label,max=500){if(!Array.isArray(rows)||!rows.length||rows.length>max)throw Error(label+' inválido.');const ids=new Set();for(const i of rows){const id=i.productId||i.id;if(typeof id!=='string'||!id||ids.has(id))throw Error(label+' com identificação inválida.');ids.add(id);}}
+function validateWorkflowData(db){
+ for(const r of db.inventories||[]){unique(r.items,'Inventário');if(!integer(r.version,1)||typeof r.name!=='string'||!Array.isArray(r.rebases))throw Error('Inventário inválido.');for(const i of r.items)if(!integer(i.expectedStock)||i.counted!==null&&!integer(i.counted)||i.counts&&(!Array.isArray(i.counts)||i.counts.length!==2||i.counts.some(v=>v!==null&&!integer(v))))throw Error('Contagem inválida.');}
+ for(const r of db.reservations||[]){unique(r.items,'Reserva');if(!integer(r.version,1)||!integer(r.totalCents)||r.validUntil&&!validDay(r.validUntil)||r.items.some(i=>!integer(i.quantity,1)||!integer(i.priceCents)))throw Error('Reserva inválida.');const gross=r.items.reduce((n,i)=>n+i.quantity*i.priceCents,0);if(!integer(gross)||gross-(r.discountCents||0)!==r.totalCents)throw Error('Total da reserva inválido.');}
+ for(const t of db.tasks||[])if(!integer(t.version,1)||typeof t.title!=='string'||!t.title.trim()||!['low','normal','high'].includes(t.priority)||t.dueDate&&!validDay(t.dueDate)||!Array.isArray(t.history))throw Error('Tarefa inválida.');
+ for(const h of db.hiddenOperations||[])if(typeof h.key!=='string'||typeof h.hidden!=='boolean'||!Array.isArray(h.history))throw Error('Preferência de pendência inválida.');
+ for(const s of db.sales){
+  if(s.receivablePlan){unique(s.receivablePlan,'Parcelamento',60);if(s.receivablePlan.some(i=>!integer(i.amountCents,1)||i.dueDate&&!validDay(i.dueDate))||s.receivablePlan.reduce((n,i)=>n+i.amountCents,0)!==s.totalCents)throw Error('Plano de recebimento inválido.');}
+  const parts=s.receivablePlan||[{id:'single-'+s.id,amountCents:s.totalCents}],allocations=(rows,total,label)=>{if(!Array.isArray(rows)||!rows.length||rows.length>60||rows.some(a=>!integer(a.amountCents,1)||!parts.some(p=>p.id===a.installmentId))||rows.reduce((n,a)=>n+a.amountCents,0)!==total||new Set(rows.map(a=>a.installmentId)).size!==rows.length)throw Error(label+' inválida.');};
+  for(const receipt of s.receipts||[])if(receipt.allocations)allocations(receipt.allocations,receipt.amountCents,'Alocação de recebimento');
+  if(s.forgiveness){if(!integer(s.forgivenCents)||s.forgiveness.some(r=>!integer(r.amountCents,1))||s.forgiveness.reduce((n,r)=>n+r.amountCents,0)!==s.forgivenCents)throw Error('Saldo perdoado inválido.');for(const r of s.forgiveness)if(r.allocations)allocations(r.allocations,r.amountCents,'Alocação de perdão');}
+  const returned=new Map();for(const r of s.returns||[]){unique(r.items,'Devolução');if(!integer(r.totalCents)||r.items.reduce((n,i)=>n+i.amountCents,0)!==r.totalCents)throw Error('Total da devolução inválido.');for(const i of r.items){const original=s.items.find(o=>o.productId===i.productId);if(!original||!integer(i.quantity,1)||!integer(i.restockQuantity)||i.restockQuantity>i.quantity||!integer(i.amountCents))throw Error('Item devolvido inválido.');returned.set(i.productId,(returned.get(i.productId)||0)+i.quantity);if(returned.get(i.productId)>original.quantity)throw Error('Devolução acima do vendido.');}}
+  if((s.returns||[]).reduce((n,r)=>n+r.totalCents,0)>s.totalCents)throw Error('Crédito acima do total da venda.');
+  if(s.returnAllocation){unique(s.returnAllocation,'Rateio');if(s.returnAllocation.length!==s.items.length||s.returnAllocation.some(i=>!integer(i.unitNetCents)||!integer(i.discountedUnits)||!s.items.some(o=>o.productId===i.productId&&o.quantity===i.quantity)||i.discountedUnits>i.quantity)||s.returnAllocation.reduce((n,i)=>n+i.unitNetCents*i.quantity-i.discountedUnits,0)!==s.totalCents)throw Error('Rateio de devolução inválido.');}
+ }
+ for(const kind of ['products','customers','suppliers'])for(const r of db[kind]||[])if(r.tags&&(!Array.isArray(r.tags)||r.tags.length>20||r.tags.some(v=>typeof v!=='string'||!v||v.length>40)))throw Error('Etiquetas inválidas.');
+ return db;
+}
+module.exports={validateWorkflowData};
