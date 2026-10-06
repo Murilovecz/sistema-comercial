@@ -1,0 +1,8 @@
+const payableDay=typeof module!=='undefined'?require('./reports').calendarDay:calendarDay;
+function installmentPaid(p,partId){return (p.payments||[]).filter(r=>r.installmentId===partId).reduce((n,r)=>n+r.amountCents,0);}
+function payableBalance(p){const paidCents=(p.payments||[]).reduce((n,r)=>n+r.amountCents,0),unpaidCents=p.totalCents-paidCents;return {paidCents,remainingCents:p.cancelledAt?0:unpaidCents,cancelledCents:p.cancelledAt?unpaidCents:0};}
+function payableStatus(p){const b=payableBalance(p);return p.cancelledAt?'cancelled':!b.remainingCents?'paid':b.paidCents?'partial':'open';}
+const payableLabels={open:'Em aberto',partial:'Parcialmente paga',paid:'Paga',cancelled:'Saldo cancelado'};
+function splitCents(total,count){if(!Number.isSafeInteger(total)||total<1||!Number.isSafeInteger(count)||count<1||count>60||total<count)throw Error('Use de 1 a 60 parcelas, com pelo menos um centavo por parcela.');const base=Math.floor(total/count),remainder=total%count;return Array.from({length:count},(_,i)=>base+(i<remainder?1:0));}
+function payableSummary(records,today=payableDay()){return records.reduce((s,p)=>{const b=payableBalance(p);s.paidCents+=b.paidCents;s.remainingCents+=b.remainingCents;s.cancelledCents+=b.cancelledCents;if(!p.cancelledAt&&!p.activeAgreementId)for(const i of p.installments){const remaining=i.amountCents-installmentPaid(p,i.id);if(!i.dueDate)s.undatedCents+=remaining;else if(i.dueDate<today)s.overdueCents+=remaining;else if(i.dueDate===today)s.todayCents+=remaining;}return s;},{paidCents:0,remainingCents:0,cancelledCents:0,undatedCents:0,overdueCents:0,todayCents:0});}
+if(typeof module!=='undefined')module.exports={installmentPaid,payableBalance,payableStatus,payableLabels,splitCents,payableSummary};

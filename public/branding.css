@@ -1,0 +1,24 @@
+/* Adapter of the operational shell. Commercial forms keep their existing light palette. */
+body{background:var(--ui-background,#f5f5f5)}
+aside{background:var(--ui-surface,#fff);color:var(--ui-text,#202020);border-right:1px solid var(--ui-border,#909090)}
+aside .brand{border-color:var(--ui-border,#909090);overflow-wrap:anywhere}
+nav button,.nav-group summary,.aside-note{color:var(--ui-text,#202020)}
+.nav-group{background:transparent;border-color:var(--ui-border,#909090)}
+.nav-group:has(button.active)>summary{color:var(--ui-text,#202020)}
+nav button.active,nav button.active:hover,button:not(.secondary):not(nav button){background:var(--brand-primary,#17603C);color:var(--brand-on-primary,#fff)}
+nav button:hover,.nav-group summary:hover{background:var(--ui-info-background,#efefef)}
+button:hover{filter:none;box-shadow:inset 0 0 0 2px currentColor}
+button:disabled{box-shadow:none}
+button:focus-visible,input:focus-visible,select:focus-visible,.nav-group summary:focus-visible{outline-color:var(--ui-focus,#315da8)}
+.shell main,dialog{color:var(--legacy-text,#202020);color-scheme:light}
+.shell main{background:var(--legacy-background,#f5f5f5)}
+.login,.panel,.card,dialog,input,select{background:var(--legacy-surface,#fff);color:var(--legacy-text,#202020);border-color:var(--legacy-border,#909090)}
+button.secondary{background:var(--legacy-surface,#fff);color:var(--legacy-link,#303030);border-color:var(--legacy-border,#909090)}
+button.secondary:hover{background:var(--legacy-info-background,#efefef)}
+.empty,th,tbody tr:hover,.purchase-stat,.scanner-box,.negotiation-box,.experience-bar,.draft-tray,.recent-tray,.table-controls{background:var(--legacy-info-background,#efefef);color:var(--legacy-text,#202020);border-color:var(--legacy-border,#909090)}
+main small,main .muted,.login .muted{color:var(--legacy-muted,#5c5c5c)}
+.card{border-top-color:var(--brand-primary,#17603C)}
+.brand span{color:var(--legacy-link,#303030)}
+.badge{background:var(--brand-accent,#B88700);color:var(--brand-on-accent,#000)}
+.branding-settings{color:var(--legacy-link,#303030);background:var(--legacy-surface,#fff);padding:8px 12px;border-radius:8px;display:inline-block}
+@media print{body{background:white}}
